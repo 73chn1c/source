@@ -1466,17 +1466,26 @@ void HandleNPCItemGiven( UINT8 ubNPC, OBJECTTYPE *pObject, INT8 bInvPos )
 	// OK< if the timer is < 5000, use who was last in the talk panel box.
 	if ( !SourceSoldierPointerIsValidAndReachableForGive( gpDestSoldier ) )
 	{
-		// just drop it
+		// Target merc is unreachable (may have moved since the approach started).
+		// Try to find the nearest PC and give to them instead.
 
-		// have to walk up to the merc closest to ubNPC
-
-		SOLDIERTYPE *		pNPC;
-
-		pNPC = FindSoldierByProfileID( ubNPC, FALSE );
+		SOLDIERTYPE * pNPC = FindSoldierByProfileID( ubNPC, FALSE );
 		if ( pNPC )
 		{
-			AddItemToPool( pNPC->sGridNo, &(pNPC->inv[bInvPos]), TRUE, 0, 0, 0 );
-			TriggerNPCWithGivenApproach( ubNPC, APPROACH_DONE_GIVING_ITEM, TRUE );
+			INT32 sDist;
+			INT32 sPCGridNo = ClosestPC( pNPC, &sDist );
+			SOLDIERTYPE * pClosestPC = FindSoldierByGridNo( sPCGridNo );
+			if ( pClosestPC && SourceSoldierPointerIsValidAndReachableForGive( pClosestPC ) && sDist <= NPC_TALK_RADIUS * 2 )
+			{
+				DeleteTalkingMenu( );
+				SoldierGiveItem( pClosestPC, pNPC, &(pNPC->inv[bInvPos]), bInvPos );
+			}
+			else
+			{
+				// Drop at NPC's position without re-triggering the approach,
+				// to prevent an infinite loop when the original target moved away.
+				AddItemToPool( pNPC->sGridNo, &(pNPC->inv[bInvPos]), TRUE, 0, 0, 0 );
+			}
 		}
 	}
 	else
