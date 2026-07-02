@@ -466,15 +466,17 @@ BOOLEAN SetThisSectorAsEnemyControlled( INT16 sMapX, INT16 sMapY, INT8 bMapZ, BO
 
 		fWasPlayerControlled = !StrategicMap[ usMapSector ].fEnemyControlled;
 
-		StrategicMap[ usMapSector ].fEnemyControlled = TRUE;
-
 		// if player lost control to the enemy
 		if ( fWasPlayerControlled )
 		{
-			if( PlayerMercsInSector( (UINT8)sMapX, (UINT8)sMapY, (UINT8)bMapZ ) )
-			{ //too premature:	Player mercs still in sector.
+			// Check for friendly forces: mercs OR militia prevent enemy takeover (#604)
+			if( PlayerMercsInSector( (UINT8)sMapX, (UINT8)sMapY, (UINT8)bMapZ ) ||
+				NumNonPlayerTeamMembersInSector( (INT16)sMapX, (INT16)sMapY, MILITIA_TEAM ) )
+			{ // friendly forces present - do NOT surrender control
 				return FALSE;
 			}
+
+			StrategicMap[ usMapSector ].fEnemyControlled = TRUE;
 
 			// check if there's a town in the sector
 			bTownId = StrategicMap[ usMapSector ].bNameId;
