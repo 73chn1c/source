@@ -3687,7 +3687,9 @@ void DailyUpdate()
 				INT32 netEnemyCount = selectedGroupPtr->pEnemyGroup->ubNumAdmins + selectedGroupPtr->pEnemyGroup->ubNumTroops + selectedGroupPtr->pEnemyGroup->ubNumElites;
 				netEnemyCount -= (selectedGroupPtr->pEnemyGroup->ubNumAdmins_Turncoat + selectedGroupPtr->pEnemyGroup->ubNumTroops_Turncoat + selectedGroupPtr->pEnemyGroup->ubNumElites_Turncoat);
 				Assert(netEnemyCount >= 0);
-				turncoatsToCreate = min(turncoatsToCreate, static_cast<UINT8>(netEnemyCount));
+				// Compare in INT32 first so counts above 255 are not silently truncated,
+				// then narrow the result (which is always <= turncoatsToCreate, i.e. <= 255).
+				turncoatsToCreate = static_cast<UINT8>(min(static_cast<INT32>(turncoatsToCreate), netEnemyCount));
 
 				const UINT16 maxAdmins = selectedGroupPtr->pEnemyGroup->ubNumAdmins - selectedGroupPtr->pEnemyGroup->ubNumAdmins_Turncoat;
 				const UINT16 maxTroops = selectedGroupPtr->pEnemyGroup->ubNumTroops - selectedGroupPtr->pEnemyGroup->ubNumTroops_Turncoat;
