@@ -109,6 +109,10 @@ extern UINT32		MemDebugCounter;
 extern	BOOLEAN		CheckIfGameCdromIsInCDromDrive();
 extern	void		QueueEvent(UINT16 ubInputEvent, UINT32 usParam, UINT32 uiParam);
 
+#ifdef ENABLE_EXCEPTION_HANDLING
+static LONG RecordExceptionInfo(EXCEPTION_POINTERS* pExceptInfo);
+#endif
+
 // Prototype Declarations
 INT32 FAR PASCAL	WindowProcedure(HWND hWindow, UINT16 Message, WPARAM wParam, LPARAM lParam);
 BOOLEAN				InitializeStandardGamingPlatform(HINSTANCE hInstance, int sCommandShow);
@@ -1313,11 +1317,44 @@ static void PopulateSectionFromCommandLine(vfs::PropertyContainer &oProps, vfs::
 	}
 }
 
+#ifdef ENABLE_EXCEPTION_HANDLING
+static LONG RecordExceptionInfo(EXCEPTION_POINTERS* pExceptInfo)
+{
+	// Diagnostic-only stub: the real implementation was never present in this
+	// codebase (RecordExceptionInfo had call sites but no definition anywhere,
+	// which is why ENABLE_EXCEPTION_HANDLING could never be turned on before).
+	FILE* f = fopen("Profiles\\UserProfile_UnfinishedBusiness\\UB_1.13\\crash-recordexc.txt", "w");
+	if (f) {
+		fprintf(f, "ExceptionCode=0x%08lX at 0x%p\n",
+			pExceptInfo->ExceptionRecord->ExceptionCode,
+			pExceptInfo->ExceptionRecord->ExceptionAddress);
+		fclose(f);
+	}
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
+// Diagnostic-only stubs: neither of these had a definition anywhere in the
+// codebase either (only extern declarations + call sites), which is the
+// other half of why ENABLE_EXCEPTION_HANDLING could never link before.
+static BOOL ERGetFirstModuleException(EXCEPTION_POINTERS*, HMODULE, LPSTR pFuncName, INT funcNameLen, LPSTR pSourceName, INT sourceNameLen, INT *pLineNum)
+{
+	if (funcNameLen > 0) pFuncName[0] = '\0';
+	if (sourceNameLen > 0) pSourceName[0] = '\0';
+	*pLineNum = 0;
+	return FALSE;
+}
+
+static STR GetExceptionString(DWORD uiExceptionCode)
+{
+	static CHAR buf[64];
+	sprintf(buf, "ExceptionCode 0x%08lX", uiExceptionCode);
+	return buf;
+}
+#endif
+
 static LONG __stdcall SGPExceptionFilter(int exceptionCount, EXCEPTION_POINTERS* pExceptInfo)
 {
-#ifdef ENABLE_EXCEPTION_HANDLING
-	extern BOOL ERGetFirstModuleException(EXCEPTION_POINTERS*, HMODULE, LPSTR, INT, LPSTR, INT, INT *);
-	extern STR GetExceptionString( DWORD uiExceptionCode );
+	#ifdef ENABLE_EXCEPTION_HANDLING
 	CHAR funcName[64], sourceName[MAX_PATH];
 	INT lineNum = 0;
 	if (exceptionCount >= 1)
@@ -1332,6 +1369,15 @@ static LONG __stdcall SGPExceptionFilter(int exceptionCount, EXCEPTION_POINTERS*
 			{
 				_FailMessage(exceptMsg, lineNum, funcName, sourceName);
 				showAssert = false;
+			}
+			{
+				FILE* f = fopen("Profiles\\UserProfile_UnfinishedBusiness\\UB_1.13\\crash-seh.txt", "w");
+				if (f) {
+					fprintf(f, "ExceptionCode=0x%08lX\nMsg=%s\nFunc=%s\nSource=%s\nLine=%d\n",
+						pExceptInfo->ExceptionRecord->ExceptionCode, exceptMsg ? exceptMsg : "(null)",
+						funcName, sourceName, lineNum);
+					fclose(f);
+				}
 			}
 		} __except (EXCEPTION_EXECUTE_HANDLER) {}
 		if (showAssert) AssertMsg(FALSE, "Unhanded exception processing GameLoop unable to recover.");
@@ -1352,23 +1398,31 @@ static void SGPGameLoop()
 	{
 		SGP_ERROR(ex.what());
 		SHOWEXCEPTION(ex);
+		{ FILE* f = fopen("Profiles\\UserProfile_UnfinishedBusiness\\UB_1.13\\crash-sgp.txt", "w"); if(f){ fprintf(f, "%s\n", ex.what()); fclose(f); } }
 	}
 	catch(vfs::Exception &ex)
 	{
 		SGP_ERROR(ex.what());
 		SHOWEXCEPTION(ex);
+		{ FILE* f = fopen("Profiles\\UserProfile_UnfinishedBusiness\\UB_1.13\\crash-vfs.txt", "w"); if(f){ fprintf(f, "%s\n", ex.what()); fclose(f); } }
 	}
 	catch(std::exception &ex)
 	{
 		sgp::Exception nex(ex.what());
 		SGP_ERROR(nex.what());
 		SHOWEXCEPTION(nex);
+		{ FILE* f = fopen("Profiles\\UserProfile_UnfinishedBusiness\\UB_1.13\\crash-std.txt", "w"); if(f){ fprintf(f, "%s\n", ex.what()); fclose(f); } }
 	}
 	catch(const char* msg)
 	{
 		sgp::Exception ex(msg);
 		SGP_ERROR(ex.what());
 		SHOWEXCEPTION(ex);
+		{ FILE* f = fopen("Profiles\\UserProfile_UnfinishedBusiness\\UB_1.13\\crash-char.txt", "w"); if(f){ fprintf(f, "%s\n", msg); fclose(f); } }
+	}
+	catch(...)
+	{
+		{ FILE* f = fopen("Profiles\\UserProfile_UnfinishedBusiness\\UB_1.13\\crash-unknown.txt", "w"); if(f){ fprintf(f, "Unknown exception type (not sgp::Exception/vfs::Exception/std::exception/const char*)\n"); fclose(f); } }
 	}
 }
 
@@ -1403,7 +1457,11 @@ static bool CallGameLoop(bool wait)
 
 	// Give it several attempts to recover from random exceptions and to display error screen
 	if (numUnsuccessfulTries > 5)
+	{
+		{ FILE* f = fopen("C:\\ja2game\\crashlog.txt", "w");
+		  if(f){ fprintf(f, "CRASH after %d retries\n", numUnsuccessfulTries); fclose(f); } }
 		ShutdownWithErrorBox("Unhandled exception. Unable to recover.");
+	}
 
 	return true;
 }
