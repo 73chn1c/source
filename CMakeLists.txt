@@ -124,7 +124,7 @@ foreach(app IN LISTS ApplicationTargets)
   set(isUbEditor $<STREQUAL:${app},JA2UBMAPEDITOR>)
   set(compilationFlags
     $<IF:${isEditor},JA2EDITOR;JA2BETAVERSION,>
-    $<IF:${isUb},JA2UB;JA2UBMAPS,>
+    $<IF:${isUb},JA2UB;JA2UBMAPS;ENABLE_EXCEPTION_HANDLING,>
     $<IF:${isUbEditor},JA2UB;JA2UBMAPS;JA2EDITOR;JA2BETAVERSION,>
   )
 
@@ -144,7 +144,7 @@ foreach(app IN LISTS ApplicationTargets)
       Ja2/Res/ja2.rc
     )
     target_link_libraries(${exe} PRIVATE ${Ja2_Libraries} $<IF:${usingMsBuild},legacy_stdio_definitions.lib,>)
-    target_link_options(${exe} PRIVATE $<IF:${usingMsBuild},/SAFESEH:NO,>)
+    target_link_options(${exe} PRIVATE $<IF:${usingMsBuild},/SAFESEH:NO,> /MAP)
     target_compile_definitions(${exe} PRIVATE ${compilationFlags} ${debugFlags})
 
     # language library for an application, e.g. JA2MAPEDITOR_ENGLISH_i18n
