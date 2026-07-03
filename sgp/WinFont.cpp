@@ -297,7 +297,7 @@ INT32 FindFreeWinFont( void )
 {
 	INT32 iCount;
 
-	for( iCount = 0; iCount < MAX_WINFONTMAP; iCount++ )
+	for( iCount = 0; iCount < (INT32)_countof(WinFonts); iCount++ )
 	{
 		if( WinFonts[ iCount ].hFont == NULL )
 	{
