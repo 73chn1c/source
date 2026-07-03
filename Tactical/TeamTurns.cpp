@@ -973,25 +973,8 @@ void StartInterrupt( void )
 
 			PlayJA2Sample( ENDTURN_1, RATE_11025, MIDVOLUME, 1, MIDDLEPAN );
 
-			// report any close call quotes for us here - removed because triggering dialogue during interrupt transition causes softlock (deadlock in UI lock)
-			/*for ( SoldierID id = gTacticalStatus.Team[ gbPlayerNum ].bFirstID; id <= gTacticalStatus.Team[ gbPlayerNum ].bLastID; ++id )
-			{
-				SOLDIERTYPE *pSoldier = id;
-
-				if ( OK_INSECTOR_MERC( pSoldier ) )
-				{
-					if ( pSoldier->flags.fCloseCall )
-					{
-						if ( pSoldier->bNumHitsThisTurn == 0 && !(pSoldier->usQuoteSaidExtFlags & SOLDIER_QUOTE_SAID_EXT_CLOSE_CALL) && Random( 3 ) == 0 )
-						{
-							// say close call quote!
-							TacticalCharacterDialogue( pSoldier, QUOTE_CLOSE_CALL );
-							pSoldier->usQuoteSaidExtFlags |= SOLDIER_QUOTE_SAID_EXT_CLOSE_CALL;
-						}
-						pSoldier->flags.fCloseCall = FALSE;
-					}
-				}
-			}*/
+			// Close call quotes used to be reported here, but triggering dialogue during
+			// the interrupt transition caused a softlock (deadlock in the UI lock).
 		}
 	}
 	else
