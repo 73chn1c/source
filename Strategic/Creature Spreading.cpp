@@ -1002,7 +1002,7 @@ static void ChooseTownSectorToAttack( UINT8 ubSectorID, BOOLEAN fOverrideTest )
 			else
 			{
 				INT32 j=0;
-				for( i = 0; i < MAP_WORLD_X * MAP_WORLD_Y + 1; i++ )
+				for( i = 0; i < MAP_WORLD_X * MAP_WORLD_Y; i++ )
 				{
 					if( StrategicMap[ i ].bNameId == bTownId )
 					{

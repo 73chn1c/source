@@ -106,6 +106,7 @@ PcxObject *LoadPcx(STR8 pFilename)
 
 	if ( pCurrentPcxObject->pPcxBuffer == NULL )
 	{
+		MemFree( pCurrentPcxObject );
 		return( NULL );
 	}
 

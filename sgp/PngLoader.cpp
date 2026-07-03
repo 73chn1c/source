@@ -132,6 +132,7 @@ bool IndexedSTIImage::addCompressedImage(UINT8 *data, UINT32 data_size, UINT32 i
 	_header.uiStoredSize += data_size;
 	_images.push_back(subimage);
 //	_compressed_images.push_back(compressed);
+	delete[] compressed; // not stored anywhere (see disabled push_back above), would otherwise leak on every call
 	_header.uiOriginalSize += image_width * image_height;
 	_header.Indexed.usNumberOfSubImages += 1;
 
