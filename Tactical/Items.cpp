@@ -1283,8 +1283,9 @@ BOOLEAN ItemIsLegal( UINT16 usItemIndex, BOOLEAN fIgnoreCoolness )
 	//if the user has selected the reduced gun list
 	if( !gGameOptions.fGunNut )
 	{
-		//if the item is a gun, or ammo
-		//if( (Item[ usItemIndex ].usItemClass == IC_GUN) || (Item[ usItemIndex ].usItemClass == IC_AMMO )) //Madd: restriction removed
+		// Only filter out guns and ammo from the extended gun list.
+		// Scopes, attachments, and other non-weapon items should remain available (#459).
+		if( (Item[ usItemIndex ].usItemClass & (IC_GUN | IC_AMMO | IC_LAUNCHER)) )
 		{
 			// and the item is only available with the extended guns
 			if(ItemIsOnlyInTonsOfGuns(usItemIndex))
